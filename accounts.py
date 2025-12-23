@@ -123,11 +123,17 @@ class CreditAccount(BankAccount):
         
         # 2. Credit Limit Check
         if (self.get_balance() - total_cost) >= -self.credit_limit:
-            new_bal = self.get_balance() - total_cost
+            # First deduct the withdrawal amount
+            new_bal = self.get_balance() - amount
             self._set_balance(new_bal)
+            self.log_transaction("Withdrawal", -amount)
             
-            print(f"✅ Withdrew Rs. {amount:.2f} (Fee: Rs. {fee:.2f}). New Balance: Rs. {new_bal:.2f}")
-            self.log_transaction(f"Withdrawal (+Fee Rs. {fee:.2f})", -total_cost)
+            # Then deduct the fee
+            final_bal = self.get_balance() - fee
+            self._set_balance(final_bal)
+            self.log_transaction("Cash Advance Fee", -fee)
+            
+            print(f"✅ Withdrew Rs. {amount:.2f} (Fee: Rs. {fee:.2f}). New Balance: Rs. {final_bal:.2f}")
             return True
         else:
             print(f"❌ Limit Exceeded. Available Credit: Rs. {self.get_available_credit():.2f}")

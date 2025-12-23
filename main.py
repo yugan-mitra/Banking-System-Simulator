@@ -179,7 +179,7 @@ def main():
     print(f"🔄 System Loaded: {len(accounts)} accounts found.")
 
     while True:
-        print("\n=== 🏦 LKR BANKING SYSTEM ===")
+        print("\n=== 🏦 BANKING SYSTEM SIMULATOR ===")
         print("1. Open Account")
         print("2. Deposit")
         print("3. Withdraw")
