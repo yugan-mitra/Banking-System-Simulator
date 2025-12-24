@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import csv
 import os
 from abc import ABC, abstractmethod
@@ -205,6 +203,7 @@ class SavingsAccount(BankAccount):
     
     # Class-level constants
     MIN_WITHDRAWAL_AMOUNT: ClassVar[float] = 50.00
+    WITHDRAWAL_FEE: ClassVar[float] = 5.00
     DEFAULT_INTEREST_RATE: ClassVar[float] = 0.04
     DEFAULT_MIN_BALANCE: ClassVar[float] = 500.00
     MONTHS_PER_YEAR: ClassVar[int] = 12
@@ -231,12 +230,14 @@ class SavingsAccount(BankAccount):
         self.interest_rate = float(interest_rate)
         self.min_balance = float(min_balance)
 
-    def withdraw(self, amount: float) -> bool:
+    def withdraw(self, amount: float, skip_fee: bool = False) -> bool:
         """
         Withdraw from savings with minimum amount and balance checks.
+        Also applies a Rs.5 withdrawal fee for regular withdrawals (not transfers).
         
         Args:
             amount: Amount to withdraw.
+            skip_fee: If True, skip the withdrawal fee (used for transfers).
             
         Returns:
             True if withdrawal was successful, False otherwise.
@@ -246,12 +247,25 @@ class SavingsAccount(BankAccount):
             print(f"❌ Transaction Failed! Minimum withdrawal amount is Rs. {self.MIN_WITHDRAWAL_AMOUNT:.2f}")
             return False
 
-        # Check minimum balance maintenance
-        if (self._balance - amount) < self.min_balance:
+        # Check minimum balance maintenance (including fee if applicable)
+        fee_amount = 0 if skip_fee else self.WITHDRAWAL_FEE
+        total_deduction = amount + fee_amount
+        if (self._balance - total_deduction) < self.min_balance:
             print(f"❌ Transaction Failed! You must maintain a minimum balance of Rs. {self.min_balance:.2f}")
+            if not skip_fee:
+                print(f"   (Note: Rs. {self.WITHDRAWAL_FEE:.2f} withdrawal fee applies)")
             return False
 
-        return super().withdraw(amount)
+        # Perform withdrawal
+        success = super().withdraw(amount)
+        
+        if success and not skip_fee:
+            # Apply withdrawal fee only for regular withdrawals
+            self._balance -= self.WITHDRAWAL_FEE
+            self._log_transaction("Withdrawal Fee", -self.WITHDRAWAL_FEE)
+            print(f"💳 Withdrawal fee of Rs. {self.WITHDRAWAL_FEE:.2f} applied.")
+        
+        return success
 
     def apply_interest(self) -> None:
         """Apply monthly interest to the account balance."""

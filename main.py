@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import csv
 import os
 from pathlib import Path
@@ -391,6 +389,69 @@ def end_of_month_process(accounts: list[BankAccount]) -> None:
     print("✅ All accounts updated and saved.")
 
 
+def transfer_money(accounts: list[BankAccount]) -> None:
+    """
+    Transfer money from one account to another.
+    
+    Args:
+        accounts: List of all accounts.
+    """
+    print("\n--- Money Transfer ---")
+    
+    # Get source account
+    print("From Account:")
+    from_account = find_account(accounts)
+    if from_account is None:
+        return
+    
+    # Get destination account
+    print("\nTo Account:")
+    to_account = find_account(accounts)
+    if to_account is None:
+        return
+    
+    # Check if same account
+    if from_account.account_number == to_account.account_number:
+        print("❌ Cannot transfer to the same account.")
+        return
+    
+    print(f"\nFrom: {from_account}")
+    print(f"To: {to_account}")
+    
+    # Get transfer amount
+    amount = get_valid_input("\nEnter amount to transfer: ", float)
+    if amount is None:
+        return
+    
+    if amount <= 0:
+        print("❌ Transfer amount must be positive.")
+        return
+    
+    # Perform transfer
+    print(f"\nProcessing transfer of Rs. {amount:.2f}...")
+    
+    # Withdraw from source (skip fee for transfers)
+    # For SavingsAccount, use skip_fee=True; other accounts ignore this parameter
+    if isinstance(from_account, SavingsAccount):
+        success = from_account.withdraw(amount, skip_fee=True)
+    else:
+        success = from_account.withdraw(amount)
+    
+    if not success:
+        print("❌ Transfer failed. Withdrawal unsuccessful.")
+        return
+    
+    # Deposit to destination
+    if not to_account.deposit(amount):
+        print("❌ Transfer failed. Deposit unsuccessful.")
+        # Rollback: return money to source account
+        from_account.deposit(amount)
+        return
+    
+    print(f"✅ Transfer successful! Rs. {amount:.2f} transferred.")
+    save_master_data(accounts)
+
+
 # =============================================================================
 # Main Menu
 # =============================================================================
@@ -400,9 +461,10 @@ def display_menu() -> None:
     print("1. Open Account")
     print("2. Deposit")
     print("3. Withdraw")
-    print("4. Show All Accounts")
-    print("5. Month-End Process")
-    print("6. Exit")
+    print("4. Transfer Money")
+    print("5. Show All Accounts")
+    print("6. Month-End Process")
+    print("7. Exit")
 
 
 def handle_menu_choice(choice: str, accounts: list[BankAccount]) -> bool:
@@ -420,11 +482,12 @@ def handle_menu_choice(choice: str, accounts: list[BankAccount]) -> bool:
         "1": lambda: create_account(accounts),
         "2": lambda: perform_transaction(accounts, "deposit"),
         "3": lambda: perform_transaction(accounts, "withdraw"),
-        "4": lambda: display_all_accounts(accounts),
-        "5": lambda: end_of_month_process(accounts),
+        "4": lambda: transfer_money(accounts),
+        "5": lambda: display_all_accounts(accounts),
+        "6": lambda: end_of_month_process(accounts),
     }
 
-    if choice == "6":
+    if choice == "7":
         print("Goodbye! 👋")
         return False
 
