@@ -29,9 +29,9 @@ A Python-based banking system simulator for managing bank accounts.
 ```
 Banking System Simulator/
 │
-├── accounts/                      # Accounts package
+├── accounts/                      # Account classes package
 │   ├── __init__.py               # Package initialization
-│   ├── constants.py              # System constants
+│   ├── constants.py              # System-wide constants
 │   ├── base_account.py           # Abstract base class
 │   ├── savings_account.py        # Savings account implementation
 │   └── credit_account.py         # Credit account implementation
@@ -42,9 +42,16 @@ Banking System Simulator/
 │       ├── saving/               # Savings account transactions
 │       └── credit/               # Credit account transactions
 │
-├── main.py                       # Main application
-├── accounts.py                   # [DEPRECATED - See details below]
-└── README.md                     # This file
+├── database_manager.py           # Database operations (save/load)
+├── input_utils.py                # Input validation utilities
+├── account_operations.py         # Business logic operations
+├── ui.py                         # User interface and menus
+├── main.py                       # Application entry point
+│
+├── accounts.py.backup            # Deprecated (old monolithic file)
+├── README.md                     # This file
+├── API_DOCUMENTATION.md          # Detailed API reference
+└── PROJECT_STRUCTURE.md          # Architecture documentation
 
 ```
 
@@ -53,54 +60,86 @@ Banking System Simulator/
 #### `accounts/` Package
 
 ##### `constants.py`
-File defining all system-wide constants:
-- Database paths (`DB_ROOT`, `RECORDS_ROOT`)
+Centralized configuration file containing all system-wide constants:
+- Database paths (`DB_ROOT`, `MASTER_FILE`, `RECORDS_ROOT`, `SAVING_DIR`, `CREDIT_DIR`)
 - Transaction headers
 - Date/Time formats
 - Currency precision settings
+- Application configuration (input attempts, deposit limits)
+- Account type identifiers
 
 ##### `base_account.py`
 Abstract base class for all account types:
-- `BankAccount` class: All common functionality
-  - Account number generation
-  - Balance management
-  - Transaction logging
-  - Deposit/Withdrawal operations
+- `BankAccount` class with common functionality:
+  - Account number generation and management
+  - Balance management and tracking
+  - Transaction logging to CSV files
+  - Deposit and withdrawal operations
+  - String representations for debugging
 
 ##### `savings_account.py`
-Savings account implementation:
-- `SavingsAccount` class
+Savings account specific implementation:
+- `SavingsAccount` class inheriting from `BankAccount`
 - Monthly interest calculation
 - Minimum balance enforcement
-- Withdrawal fees and restrictions
+- Withdrawal fee handling
+- Special fee-skipping for transfers
 
 ##### `credit_account.py`
-Credit account implementation:
-- `CreditAccount` class
+Credit account specific implementation:
+- `CreditAccount` class inheriting from `BankAccount`
 - Credit limit management
-- Cash advance fees
-- Debt interest calculation
+- Cash advance fee calculation
+- Debt interest charging on negative balances
+- Available credit tracking
 
 ##### `__init__.py`
-Package initialization and clean imports:
-- Exposes all classes
+Package initialization module:
+- Exports all public classes and constants
 - Version information
-- Package-level exports
+- Clean public API for the accounts module
 
-#### `main.py`
-Main application file:
-- Menu-driven user interface
-- Account management operations:
-  - Create new accounts
-  - Deposit/Withdraw
-  - Check balance
-  - View transaction history
-  - Transfer funds
-- Master database operations (save/load)
-- Input validation and error handling
+#### Core Application Modules
 
-#### `accounts.py` [DEPRECATED]
-⚠️ **This file is no longer used!** All code has been moved to the `accounts/` package. It is kept to maintain backward compatibility. Use the `accounts/` package for new code.
+##### `database_manager.py` (150 lines)
+Handles all database operations:
+- `save_master_data()`: Saves all accounts to CSV
+- `load_master_data()`: Loads accounts from CSV
+- `_account_to_row()`: Converts account to CSV row
+- `_row_to_account()`: Converts CSV row to account object
+- Error handling for file I/O operations
+
+##### `input_utils.py` (50 lines)
+Provides input validation and helper functions:
+- `get_valid_input()`: Gets validated user input with retry logic
+- `find_account()`: Finds an account by number with error handling
+- Type conversion and validation
+
+##### `account_operations.py` (230 lines)
+Contains all business logic for account operations:
+- `create_account()`: Creates new savings or credit accounts
+- `perform_transaction()`: Handles deposits and withdrawals
+- `transfer_money()`: Transfers funds between accounts with rollback
+- `display_all_accounts()`: Lists all registered accounts
+- `end_of_month_process()`: Applies interest/debt charges
+- `_create_account_by_type()`: Account type validation
+- `_execute_transaction()`: Transaction execution
+- `_handle_failed_attempt()`: Error message handling
+
+##### `ui.py` (60 lines)
+Manages user interface and menu flow:
+- `display_menu()`: Shows main menu options
+- `handle_menu_choice()`: Routes menu selections to appropriate functions
+- Menu-to-function mapping via dictionary
+
+##### `main.py` (35 lines)
+Simplified application entry point:
+- `initialize_system()`: Creates required database directories
+- `main()`: Orchestrates system initialization and main loop
+- Imports and coordinates all other modules
+
+#### `accounts.py.backup` [DEPRECATED]
+⚠️ **This file is no longer used!** All code has been migrated to the modular structure. Kept for reference only.
 
 ## Installation
 
@@ -340,16 +379,33 @@ The application has comprehensive validation and error handling:
 
 ## Development
 
+### Code Organization
+
+The project follows a modular architecture with clear separation of concerns:
+
+- **accounts/** - Domain models (account classes)
+- **database_manager.py** - Data access layer
+- **input_utils.py** - Input validation
+- **account_operations.py** - Business logic
+- **ui.py** - User interface
+- **main.py** - Application entry point
+
+This structure makes the code:
+- Easy to understand and navigate
+- Simple to test and extend
+- Maintainable and scalable
+
 ### Code Style
 - PEP 8 compliant
 - Type hints used throughout
 - Comprehensive docstrings
 - Descriptive variable names
+- Modular and testable design
 
 ### Testing Recommendations
-1. Account creation tests
-2. Deposit/Withdrawal validation tests
-3. Interest calculation tests
+1. Unit tests for account operations
+2. Integration tests for database operations
+3. Input validation tests
 4. Transfer functionality tests
 5. Edge cases (negative amounts, exceeding limits)
 6. File I/O tests
