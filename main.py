@@ -1,35 +1,25 @@
 import csv
-import os
+
 from pathlib import Path
-from typing import Final
+from typing import Any
 
-from accounts import SavingsAccount, CreditAccount, BankAccount
-
-# =============================================================================
-# Constants
-# =============================================================================
-DB_ROOT: Final[str] = "database"
-MASTER_FILE: Final[Path] = Path(DB_ROOT) / "banking_master.csv"
-RECORDS_ROOT: Final[Path] = Path(DB_ROOT) / "records"
-SAVING_DIR: Final[Path] = RECORDS_ROOT / "saving"
-CREDIT_DIR: Final[Path] = RECORDS_ROOT / "credit"
-
-# Input validation
-MAX_INPUT_ATTEMPTS: Final[int] = 3
-MAX_TRANSACTION_ATTEMPTS: Final[int] = 3
-
-# Minimum deposits
-MIN_SAVINGS_DEPOSIT: Final[float] = 500.00
-MIN_CREDIT_DEPOSIT: Final[float] = 5000.00
-
-# Master file headers
-MASTER_HEADERS: Final[tuple[str, ...]] = (
-    "Type", "AccNum", "Name", "CurrentBalance", "Rate_Limit", "MinBal_Fee"
+from accounts import (
+    SavingsAccount,
+    CreditAccount,
+    BankAccount,
+    DB_ROOT,
+    MASTER_FILE,
+    RECORDS_ROOT,
+    SAVING_DIR,
+    CREDIT_DIR,
+    MAX_INPUT_ATTEMPTS,
+    MAX_TRANSACTION_ATTEMPTS,
+    MIN_SAVINGS_DEPOSIT,
+    MIN_CREDIT_DEPOSIT,
+    MASTER_HEADERS,
+    ACCOUNT_TYPE_SAVINGS,
+    ACCOUNT_TYPE_CREDIT
 )
-
-# Account type identifiers
-ACCOUNT_TYPE_SAVINGS: Final[str] = "SAVINGS"
-ACCOUNT_TYPE_CREDIT: Final[str] = "CREDIT"
 
 
 # =============================================================================
@@ -173,7 +163,7 @@ def _row_to_account(row: list[str]) -> BankAccount | None:
 # =============================================================================
 # Input Helpers
 # =============================================================================
-def get_valid_input[T](prompt: str, data_type: type[T]) -> T | None:
+def get_valid_input(prompt: str, data_type: type[Any]) -> Any:
     """
     Get validated user input with retry logic.
     
